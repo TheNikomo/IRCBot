@@ -84,6 +84,8 @@ class ChatBot(irc.bot.SingleServerIRCBot):
             volume = str(round(market[0]['volume'], 2))
 
             c.privmsg(self.channel, "Bitcoin - Current: " + current + " - Volume: " + volume + " - For more info, command: bitcoin more")
+            if nick == "pitts":
+	            c.privmsg(self.channel, "Had you bought Bitcoins instead of a $2000 laptop, you would now have " + str(round(2000.00/market[0]['close'], 2)) + " Bitcoins") 
         elif cmd == "bitcoin more":
             data = requests.get("http://nikomo.fi/markets.json").json()
             market = filter(lambda x:x["symbol"]=="bitstampUSD", data)
