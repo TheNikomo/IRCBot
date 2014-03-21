@@ -20,16 +20,16 @@ The known commands are:
     dcc -- Let the bot invite you to a DCC CHAT connection.
 """
 import resource
+import requests
 import inspect
 import os
 import irc.bot
 import irc.strings
 from irc.client import ip_numstr_to_quad, ip_quad_to_numstr
 
-class TestBot(irc.bot.SingleServerIRCBot):
+class ChatBot(irc.bot.SingleServerIRCBot):
     def __init__(self, channel, nickname, server, port=6667):
-        irc.bot.SingleServerIRCBot.__init__(self, [(server, port)],
-        	        								nickname, nickname)
+        irc.bot.SingleServerIRCBot.__init__(self, [(server, port)], nickname, nickname)
         self.channel = channel
 
     def on_nicknameinuse(self, c, e):
@@ -76,16 +76,16 @@ class TestBot(irc.bot.SingleServerIRCBot):
         elif cmd == "status":
         	c.privmsg(self.channel, "Currently using " + str(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss) + " KiB of memory.")
         elif cmd == "bitcoin":
-            c.privmsg(nick, "Fuck you")
-        
+            data = requests.get("http://nikomo.fi/markets.json").json()
+            market = filter(lambda x:x["symbol"]=="bitstampUSD", data)
+            c.privmsg(self.channel, "BTC, High: $" + str(market[0]['high']) + " - Average: $" + str(market[0]['avg']) + " - Low: $" + str(market[0]['low']))
         else:
             c.privmsg(nick, "Not understood: " + cmd)
 
 def main():
     import sys
     if len(sys.argv) != 4:
-        print("Usage: " + inspect.getfile(inspect.currentframe()) + 
-        	" <server[:port]> <channel> <nickname>")
+        print("Usage: " + inspect.getfile(inspect.currentframe()) + " <server[:port]> <channel> <nickname>")
         sys.exit(1)
 
     s = sys.argv[1].split(":", 1)
@@ -101,7 +101,7 @@ def main():
     channel = sys.argv[2]
     nickname = sys.argv[3]
 
-    bot = TestBot(channel, nickname, server, port)
+    bot = ChatBot(channel, nickname, server, port)
     bot.start()
 
 if __name__ == "__main__":
