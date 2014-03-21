@@ -10,14 +10,13 @@ sessions.
 
 The known commands are:
 
-    stats -- Prints some channel information.
+    status -- Sends memory usage to channel.
 
-    disconnect -- Disconnect the bot.  The bot will try to reconnect
-                  after 60 seconds.
+    leave -- Bot kills itself.
 
-    die -- Let the bot cease to exist.
+    bitcoin -- Sends Bitcoin price information to channel
 
-    dcc -- Let the bot invite you to a DCC CHAT connection.
+    bitcoin more -- Sends even more Bitcoin price information to channel
 """
 import resource
 import requests
