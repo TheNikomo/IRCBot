@@ -69,7 +69,7 @@ class ChatBot(irc.bot.SingleServerIRCBot):
 
         if cmd == "leave":
         	if nick == "nikomo":
-        		c.privmsg(self.channel, "Yes, master " + str(nick) + ".")
+        		c.privmsg(self.channel, "Fine.")
         		self.die()
         	else:
         		c.privmsg(self.channel, "No.")
@@ -78,7 +78,31 @@ class ChatBot(irc.bot.SingleServerIRCBot):
         elif cmd == "bitcoin":
             data = requests.get("http://nikomo.fi/markets.json").json()
             market = filter(lambda x:x["symbol"]=="bitstampUSD", data)
-            c.privmsg(self.channel, "BTC, High: $" + str(market[0]['high']) + " - Average: $" + str(market[0]['avg']) + " - Low: $" + str(market[0]['low']))
+
+            current = str(round(market[0]['close'], 2))
+            currency = str(market[0]['currency'])
+            volume = str(round(market[0]['volume'], 2))
+
+            c.privmsg(self.channel, "Bitcoin - Current: " + current + " - Volume: " + volume + " - For more info, command: bitcoin more")
+        elif cmd == "bitcoin more":
+            data = requests.get("http://nikomo.fi/markets.json").json()
+            market = filter(lambda x:x["symbol"]=="bitstampUSD", data)
+
+            low = str(round(market[0]['low'], 2))
+            avg = str(round(market[0]['avg'], 2))
+            high = str(round(market[0]['high'], 2))
+
+            currency = str(market[0]['currency'])
+            volume = str(round(market[0]['volume'], 2))
+
+            bid = str(round(market[0]['bid'], 2))
+            ask = str(round(market[0]['ask'], 2))
+
+            worth = str('{:,}'.format(round(market[0]['volume']*market[0]['avg'], 2)))
+
+            c.privmsg(self.channel, "Bitcoin, Bitstamp Exchange, data refreshed every 15 minutes - daily trading volume " + str(volume) + " " + "BTC, worth " + worth + " " + currency)
+            c.privmsg(self.channel, "High: " + high + ", Average: " + avg + ", Low: " + low)
+            c.privmsg(self.channel, "Bid: " + bid + ", Ask: " + ask)
         else:
             c.privmsg(nick, "Not understood: " + cmd)
 
