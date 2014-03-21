@@ -19,18 +19,22 @@ The known commands are:
 
     dcc -- Let the bot invite you to a DCC CHAT connection.
 """
-
+import resource
+import inspect
+import os
 import irc.bot
 import irc.strings
 from irc.client import ip_numstr_to_quad, ip_quad_to_numstr
 
 class TestBot(irc.bot.SingleServerIRCBot):
     def __init__(self, channel, nickname, server, port=6667):
-        irc.bot.SingleServerIRCBot.__init__(self, [(server, port)], nickname, nickname)
+        irc.bot.SingleServerIRCBot.__init__(self, [(server, port)],
+        	        								nickname, nickname)
         self.channel = channel
 
     def on_nicknameinuse(self, c, e):
-        c.nick(c.get_nickname() + "_")
+        raise RuntimeError("Nickname in use, failing spectacularly")
+        self.die()
 
     def on_welcome(self, c, e):
         c.join(self.channel)
@@ -63,35 +67,25 @@ class TestBot(irc.bot.SingleServerIRCBot):
         nick = e.source.nick
         c = self.connection
 
-        if cmd == "disconnect":
-            self.disconnect()
-        elif cmd == "die":
-            self.die()
-        elif cmd == "stats":
-            for chname, chobj in self.channels.items():
-                c.notice(nick, "--- Channel statistics ---")
-                c.notice(nick, "Channel: " + chname)
-                users = chobj.users()
-                users.sort()
-                c.notice(nick, "Users: " + ", ".join(users))
-                opers = chobj.opers()
-                opers.sort()
-                c.notice(nick, "Opers: " + ", ".join(opers))
-                voiced = chobj.voiced()
-                voiced.sort()
-                c.notice(nick, "Voiced: " + ", ".join(voiced))
-        elif cmd == "dcc":
-            dcc = self.dcc_listen()
-            c.ctcp("DCC", nick, "CHAT chat %s %d" % (
-                ip_quad_to_numstr(dcc.localaddress),
-                dcc.localport))
+        if cmd == "leave":
+        	if nick == "nikomo":
+        		c.privmsg(self.channel, "Yes, master " + str(nick) + ".")
+        		self.die()
+        	else:
+        		c.privmsg(self.channel, "No.")
+        elif cmd == "status":
+        	c.privmsg(self.channel, "Currently using " + str(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss) + " KiB of RAM, I think?")
+        elif cmd == "bitcoin":
+            c.privmsg(nick, "Fuck you")
+        
         else:
-            c.notice(nick, "Not understood: " + cmd)
+            c.privmsg(nick, "Not understood: " + cmd)
 
 def main():
     import sys
     if len(sys.argv) != 4:
-        print("Usage: testbot <server[:port]> <channel> <nickname>")
+        print("Usage: " + inspect.getfile(inspect.currentframe()) + 
+        	" <server[:port]> <channel> <nickname>")
         sys.exit(1)
 
     s = sys.argv[1].split(":", 1)
