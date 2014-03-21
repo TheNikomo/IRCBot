@@ -74,7 +74,7 @@ class TestBot(irc.bot.SingleServerIRCBot):
         	else:
         		c.privmsg(self.channel, "No.")
         elif cmd == "status":
-        	c.privmsg(self.channel, "Currently using " + str(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss) + " KiB of RAM, I think?")
+        	c.privmsg(self.channel, "Currently using " + str(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss) + " KiB of memory.")
         elif cmd == "bitcoin":
             c.privmsg(nick, "Fuck you")
         
