@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#! /usr/bin/env python2
 """A simple example bot.
 
 This is an example bot that uses the SingleServerIRCBot class from
@@ -68,23 +68,28 @@ class ChatBot(irc.bot.SingleServerIRCBot):
 
         if cmd == "leave":
         	if nick == "nikomo":
-        		c.privmsg(self.channel, "Fine.")
+        		c.privmsg(self.channel, "Shutting down.")
         		self.die()
         	else:
-        		c.privmsg(self.channel, "No.")
+        		c.privmsg(self.channel, "Not authorized.")
+
         elif cmd == "status":
         	c.privmsg(self.channel, "Currently using " + str(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss) + " KiB of memory.")
+
         elif cmd == "bitcoin":
             data = requests.get("http://nikomo.fi/markets.json").json()
-            market = filter(lambda x:x["symbol"]=="bitstampUSD", data)
+            USD = filter(lambda x:x["symbol"]=="bitstampUSD", data)
+            EUR = filter(lambda x:x["symbol"]=="krakenEUR", data)
 
-            current = str(round(market[0]['close'], 2))
-            currency = str(market[0]['currency'])
-            volume = str(round(market[0]['volume'], 2))
+            USDcur = round(USD[0]['close'], 2)
+            EURcur = round(EUR[0]['close'], 2)
 
-            c.privmsg(self.channel, "Bitcoin - Current: " + current + " - Volume: " + volume + " - For more info, command: bitcoin more")
-            if nick == "pitts":
-	            c.privmsg(self.channel, "Had you bought Bitcoins instead of a $2000 laptop, you would now have " + str(round(2000.00/market[0]['close'], 2)) + " Bitcoins") 
+            euro=u'\u20ac'
+
+            message = "Bitcoin - Current: $%.2f, %.2f%s" % (USDcur, EURcur, euro)
+
+            c.privmsg(self.channel, message)
+
         elif cmd == "bitcoin more":
             data = requests.get("http://nikomo.fi/markets.json").json()
             market = filter(lambda x:x["symbol"]=="bitstampUSD", data)
