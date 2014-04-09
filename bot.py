@@ -1,23 +1,5 @@
 #! /usr/bin/env python2
-"""A simple example bot.
 
-This is an example bot that uses the SingleServerIRCBot class from
-irc.bot.  The bot enters a channel and listens for commands in
-private messages and channel traffic.  Commands in channel messages
-are given by prefixing the text by the bot name followed by a colon.
-It also responds to DCC CHAT invitations and echos data sent in such
-sessions.
-
-The known commands are:
-
-    status -- Sends memory usage to channel.
-
-    leave -- Bot kills itself.
-
-    bitcoin -- Sends Bitcoin price information to channel
-
-    bitcoin more -- Sends even more Bitcoin price information to channel
-"""
 import resource
 import requests
 import inspect
@@ -47,24 +29,11 @@ class ChatBot(irc.bot.SingleServerIRCBot):
             self.do_command(e, a[1].strip())
         return
 
-    def on_dccmsg(self, c, e):
-        c.privmsg("You said: " + e.arguments[0])
-
-    def on_dccchat(self, c, e):
-        if len(e.arguments) != 2:
-            return
-        args = e.arguments[1].split()
-        if len(args) == 4:
-            try:
-                address = ip_numstr_to_quad(args[2])
-                port = int(args[3])
-            except ValueError:
-                return
-            self.dcc_connect(address, port)
-
     def do_command(self, e, cmd):
         nick = e.source.nick
         c = self.connection
+        print nick + ": " + cmd
+
 
         if cmd == "leave":
         	if nick == "nikomo":
@@ -72,11 +41,17 @@ class ChatBot(irc.bot.SingleServerIRCBot):
         		self.die()
         	else:
         		c.privmsg(self.channel, "Not authorized.")
+                print nick + " tried to shut me down"
 
         elif cmd == "status":
-        	c.privmsg(self.channel, "Currently using " + str(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss) + " KiB of memory.")
+            memory = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+            c.privmsg(self.channel, "Currently using %s KiB of memory." % memory)
+
+        elif cmd == "help":
+            c.privmsg(self.channel, "Commands: bitcoin, bitcoin more, status")
 
         elif cmd == "bitcoin":
+            euro=u'\u20ac'
             data = requests.get("http://nikomo.fi/markets.json").json()
             USD = filter(lambda x:x["symbol"]=="bitstampUSD", data)
             EUR = filter(lambda x:x["symbol"]=="krakenEUR", data)
@@ -84,31 +59,29 @@ class ChatBot(irc.bot.SingleServerIRCBot):
             USDcur = round(USD[0]['close'], 2)
             EURcur = round(EUR[0]['close'], 2)
 
-            euro=u'\u20ac'
 
-            message = "Bitcoin - Current: $%.2f, %.2f%s" % (USDcur, EURcur, euro)
+            message = nick + ": Bitcoin - Current: $%.2f, %.2f%s - \"bitcoin more\" for more information" % (USDcur, EURcur, euro)
 
             c.privmsg(self.channel, message)
 
         elif cmd == "bitcoin more":
+            euro=u'\u20ac'
             data = requests.get("http://nikomo.fi/markets.json").json()
-            market = filter(lambda x:x["symbol"]=="bitstampUSD", data)
+            USDmarket = filter(lambda x:x["symbol"]=="bitstampUSD", data)
+            EURmarket = filter(lambda x:x["symbol"]=="krakenEUR", data)
 
-            low = str(round(market[0]['low'], 2))
-            avg = str(round(market[0]['avg'], 2))
-            high = str(round(market[0]['high'], 2))
+            USDlow = round(USDmarket[0]['low'], 2)
+            USDavg = round(USDmarket[0]['avg'], 2)
+            USDhigh = round(USDmarket[0]['high'], 2)
 
-            currency = str(market[0]['currency'])
-            volume = str(round(market[0]['volume'], 2))
+            EURlow = round(EURmarket[0]['low'], 2)
+            EURavg = round(EURmarket[0]['avg'], 2)
+            EURhigh = round(EURmarket[0]['high'], 2)
 
-            bid = str(round(market[0]['bid'], 2))
-            ask = str(round(market[0]['ask'], 2))
+            #worth = str('{:,}'.format(round(market[0]['volume']*market[0]['avg'], 2)))
 
-            worth = str('{:,}'.format(round(market[0]['volume']*market[0]['avg'], 2)))
-
-            c.privmsg(self.channel, "Bitcoin, Bitstamp Exchange, data refreshed every 15 minutes - daily trading volume " + str(volume) + " " + "BTC, worth " + worth + " " + currency)
-            c.privmsg(self.channel, "High: " + high + ", Average: " + avg + ", Low: " + low)
-            c.privmsg(self.channel, "Bid: " + bid + ", Ask: " + ask)
+            c.privmsg(self.channel, "Low: $%.2f - Average: $%.2f - High: $%.2f" % (USDlow, USDavg, USDhigh))
+            c.privmsg(self.channel, "Low: %.2f%s - Average: %.2f%s - High: %.2f%s" % (EURlow, euro, EURavg, euro, EURhigh, euro))
         else:
             c.privmsg(nick, "Not understood: " + cmd)
 
