@@ -36,11 +36,12 @@ class ChatBot(irc.bot.SingleServerIRCBot):
 
 
         if cmd == "leave":
-        	if nick == "nikomo":
-        		c.privmsg(self.channel, "Shutting down.")
-        		self.die()
-        	else:
-        		c.privmsg(self.channel, "Not authorized.")
+            if nick == "nikomo":
+                c.privmsg(self.channel, "Shutting down.")
+                print "Shutting down"
+                self.die()
+            else:
+                c.privmsg(self.channel, "Not authorized.")
                 print nick + " tried to shut me down"
 
         elif cmd == "status":
@@ -66,22 +67,34 @@ class ChatBot(irc.bot.SingleServerIRCBot):
 
         elif cmd == "bitcoin more":
             euro=u'\u20ac'
+
             data = requests.get("http://nikomo.fi/markets.json").json()
+            prices = requests.get("http://nikomo.fi/weighted_prices.json").json()
+
             USDmarket = filter(lambda x:x["symbol"]=="bitstampUSD", data)
             EURmarket = filter(lambda x:x["symbol"]=="krakenEUR", data)
 
-            USDlow = round(USDmarket[0]['low'], 2)
-            USDavg = round(USDmarket[0]['avg'], 2)
-            USDhigh = round(USDmarket[0]['high'], 2)
+            USD7d = "$" + prices['USD']['7d']
+            USD30d = "$" + prices['USD']['30d']
+            USD24h = "$" + prices['USD']['24h']
 
-            EURlow = round(EURmarket[0]['low'], 2)
-            EURavg = round(EURmarket[0]['avg'], 2)
-            EURhigh = round(EURmarket[0]['high'], 2)
+            EUR7d = prices['EUR']['7d'] + euro
+            EUR30d = prices['EUR']['30d'] + euro 
+            EUR24h = prices['EUR']['24h'] + euro
+
+            USDlow = "$" + str(round(USDmarket[0]['low'], 2))
+            USDavg = "$" + str(round(USDmarket[0]['avg'], 2))
+            USDhigh = "$" + str(round(USDmarket[0]['high'], 2))
+
+            EURlow = str(round(EURmarket[0]['low'], 2)) + euro
+            EURavg = str(round(EURmarket[0]['avg'], 2)) + euro
+            EURhigh = str(round(EURmarket[0]['high'], 2)) + euro
 
             #worth = str('{:,}'.format(round(market[0]['volume']*market[0]['avg'], 2)))
 
-            c.privmsg(self.channel, "Low: $%.2f - Average: $%.2f - High: $%.2f" % (USDlow, USDavg, USDhigh))
-            c.privmsg(self.channel, "Low: %.2f%s - Average: %.2f%s - High: %.2f%s" % (EURlow, euro, EURavg, euro, EURhigh, euro))
+            c.privmsg(self.channel, nick + ": Bitcoin prices - USD from Bitstamp, EUR from Kraken")
+            c.privmsg(self.channel, "Low: %s, %s - Average: %s, %s - High: %s, %s" % (USDlow, EURlow, USDavg, EURavg, USDhigh, EURhigh))
+            c.privmsg(self.channel, "24hr: %s, %s - 7d: %s, %s - 30d: %s, %s" % (USD24h, EUR24h, USD7d, EUR7d, USD30d, EUR30d))
         else:
             c.privmsg(nick, "Not understood: " + cmd)
 
