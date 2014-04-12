@@ -4,14 +4,17 @@ import resource
 import requests
 import inspect
 import os
+import random
+import string
 import irc.bot
 import irc.strings
 from irc.client import ip_numstr_to_quad, ip_quad_to_numstr
 
 class ChatBot(irc.bot.SingleServerIRCBot):
-    def __init__(self, channel, nickname, server, port=6667):
+    def __init__(self, code, channel, nickname, server, port=6667):
         irc.bot.SingleServerIRCBot.__init__(self, [(server, port)], nickname, nickname)
         self.channel = channel
+        self.code = code
 
     def on_nicknameinuse(self, c, e):
         raise RuntimeError("Nickname in use, failing spectacularly")
@@ -19,6 +22,7 @@ class ChatBot(irc.bot.SingleServerIRCBot):
 
     def on_welcome(self, c, e):
         c.join(self.channel)
+        print "Self-destruct code: " + self.code
 
     def on_privmsg(self, c, e):
         self.do_command(e, e.arguments[0], "private")
@@ -28,10 +32,6 @@ class ChatBot(irc.bot.SingleServerIRCBot):
         if len(a) > 1 and irc.strings.lower(a[0]) == irc.strings.lower(self.connection.get_nickname()):
             self.do_command(e, a[1].strip(), "public")
         return
-        print str(e.arguments[0])
-        print str(a)
-        print str(c)
-
 
     def do_command(self, e, cmd, target):
         nick = e.source.nick
@@ -42,17 +42,10 @@ class ChatBot(irc.bot.SingleServerIRCBot):
             destination = nick
         else:
             destination = self.channel
-            
 
-
-        if cmd == "leave":
-            if nick == "nikomo":
-                c.privmsg(destination, "Shutting down.")
-                print "Shutting down"
-                self.die()
-            else:
-                c.privmsg(destination, "Not authorized.")
-                print nick + " tried to shut me down"
+        if cmd == self.code:
+            c.privmsg(self.channel, "Self-destruct code detected, exploding into bits.")
+            self.die()
 
         elif cmd == "status":
             memory = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
@@ -125,7 +118,9 @@ def main():
     channel = sys.argv[2]
     nickname = sys.argv[3]
 
-    bot = ChatBot(channel, nickname, server, port)
+    code = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(12))
+
+    bot = ChatBot(code, channel, nickname, server, port)
     bot.start()
 
 if __name__ == "__main__":
