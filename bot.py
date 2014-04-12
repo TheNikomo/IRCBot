@@ -1,4 +1,4 @@
-#! /usr/bin/env python2
+#!/usr/bin/env python2
 
 import resource
 import requests
@@ -21,35 +21,45 @@ class ChatBot(irc.bot.SingleServerIRCBot):
         c.join(self.channel)
 
     def on_privmsg(self, c, e):
-        self.do_command(e, e.arguments[0])
+        self.do_command(e, e.arguments[0], "private")
 
     def on_pubmsg(self, c, e):
         a = e.arguments[0].split(":", 1)
         if len(a) > 1 and irc.strings.lower(a[0]) == irc.strings.lower(self.connection.get_nickname()):
-            self.do_command(e, a[1].strip())
+            self.do_command(e, a[1].strip(), "public")
         return
+        print str(e.arguments[0])
+        print str(a)
+        print str(c)
 
-    def do_command(self, e, cmd):
+
+    def do_command(self, e, cmd, target):
         nick = e.source.nick
         c = self.connection
-        print nick + ": " + cmd
+        print target + " - " + nick + ": " + cmd
+
+        if target == "private":
+            destination = nick
+        else:
+            destination = self.channel
+            
 
 
         if cmd == "leave":
             if nick == "nikomo":
-                c.privmsg(self.channel, "Shutting down.")
+                c.privmsg(destination, "Shutting down.")
                 print "Shutting down"
                 self.die()
             else:
-                c.privmsg(self.channel, "Not authorized.")
+                c.privmsg(destination, "Not authorized.")
                 print nick + " tried to shut me down"
 
         elif cmd == "status":
             memory = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
-            c.privmsg(self.channel, "Currently using %s KiB of memory." % memory)
+            c.privmsg(destination, "Currently using %s KiB of memory." % memory)
 
         elif cmd == "help":
-            c.privmsg(self.channel, "Commands: bitcoin, bitcoin more, status")
+            c.privmsg(destination, "Commands: bitcoin, bitcoin more, status")
 
         elif cmd == "bitcoin":
             euro=u'\u20ac'
@@ -63,7 +73,7 @@ class ChatBot(irc.bot.SingleServerIRCBot):
 
             message = nick + ": Bitcoin - Current: $%.2f, %.2f%s - \"bitcoin more\" for more information" % (USDcur, EURcur, euro)
 
-            c.privmsg(self.channel, message)
+            c.privmsg(destination, message)
 
         elif cmd == "bitcoin more":
             euro=u'\u20ac'
@@ -90,11 +100,9 @@ class ChatBot(irc.bot.SingleServerIRCBot):
             EURavg = str(round(EURmarket[0]['avg'], 2)) + euro
             EURhigh = str(round(EURmarket[0]['high'], 2)) + euro
 
-            #worth = str('{:,}'.format(round(market[0]['volume']*market[0]['avg'], 2)))
-
-            c.privmsg(self.channel, nick + ": Bitcoin prices - USD from Bitstamp, EUR from Kraken")
-            c.privmsg(self.channel, "Low: %s, %s - Average: %s, %s - High: %s, %s" % (USDlow, EURlow, USDavg, EURavg, USDhigh, EURhigh))
-            c.privmsg(self.channel, "24hr: %s, %s - 7d: %s, %s - 30d: %s, %s" % (USD24h, EUR24h, USD7d, EUR7d, USD30d, EUR30d))
+            c.privmsg(destination, nick + ": Bitcoin prices - USD from Bitstamp, EUR from Kraken")
+            c.privmsg(destination, "Low: %s, %s - Average: %s, %s - High: %s, %s" % (USDlow, EURlow, USDavg, EURavg, USDhigh, EURhigh))
+            c.privmsg(destination, "24hr: %s, %s - 7d: %s, %s - 30d: %s, %s" % (USD24h, EUR24h, USD7d, EUR7d, USD30d, EUR30d))
         else:
             c.privmsg(nick, "Not understood: " + cmd)
 
