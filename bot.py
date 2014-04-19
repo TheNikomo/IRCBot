@@ -28,7 +28,7 @@ class ChatBot(irc.bot.SingleServerIRCBot):
         self.do_command(e, e.arguments[0], "private")
 
     def on_pubmsg(self, c, e):
-        a = e.arguments[0].split(".")
+        a = e.arguments[0].split("!")
         if len(a) > 1:
             self.do_command(e, a[1], "public")
         return
