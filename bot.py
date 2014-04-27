@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 import resource
 import inspect
@@ -7,7 +7,7 @@ import random
 import string
 import irc.bot
 import irc.strings
-import bitcoin
+import modules.bitcoin as bitcoin
 from irc.client import ip_numstr_to_quad, ip_quad_to_numstr
 
 class ChatBot(irc.bot.SingleServerIRCBot):
@@ -22,7 +22,7 @@ class ChatBot(irc.bot.SingleServerIRCBot):
 
     def on_welcome(self, c, e):
         c.join(self.channel)
-        print "Self-destruct code: " + self.code
+        print("Self-destruct code: " + self.code)
 
     def on_privmsg(self, c, e):
         self.do_command(e, e.arguments[0], "private")
@@ -31,6 +31,9 @@ class ChatBot(irc.bot.SingleServerIRCBot):
         a = e.arguments[0].split("!")
         if len(a) > 1:
             self.do_command(e, a[1], "public")
+        if e.arguments[0] == self.code:
+            print("Code accepted from " + nick + ", shutting off.")
+            self.die()
         return
 
     def do_command(self, e, cmd, target):
@@ -43,29 +46,21 @@ class ChatBot(irc.bot.SingleServerIRCBot):
             destination = self.channel
 
         if cmd == self.code:
-            c.privmsg(self.channel, "Shutdown code detected.")
-            print "Code accepted from " + nick + ", shutting off."
+            print("Code accepted from " + nick + ", shutting off.")
             self.die()
 
         elif cmd == "help":
-            c.privmsg(destination, "Commands: .bitcoin, .bitcoin more, .status")
+            c.privmsg(destination, "Commands: !bitcoin, !bitcoin more, !status")
 
         elif cmd == "status":
             memory = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
             c.privmsg(destination, "Currently using %s KiB of memory." % memory)
 
         elif cmd == "bitcoin":
-            data = bitcoin.basic()
-            message = nick + ": Bitcoin - Current: %s, %s - \".bitcoin more\" for more information" % (data['USD'], data['EUR'])
-            c.privmsg(destination, message)
+            bitcoin.sendBasicPrices(c, nick, destination)
 
         elif cmd == "bitcoin more":
-
-            data = bitcoin.advanced()
-
-            c.privmsg(destination, nick + ": Bitcoin prices - USD from Bitstamp, EUR from Kraken")
-            c.privmsg(destination, "Low: %s, %s - Average: %s, %s - High: %s, %s" % (data["USD"]["low"], data["EUR"]["low"], data["USD"]["avg"], data["EUR"]["avg"], data["USD"]["high"], data["EUR"]["high"], ))
-            c.privmsg(destination, "24hr: %s, %s - 7d: %s, %s - 30d: %s, %s" % (data["USD"]["24h"], data["EUR"]["24h"], data["USD"]["7d"], data["EUR"]["7d"], data["USD"]["30d"], data["EUR"]["30d"], ))
+            bitcoin.sendAdvancedPrices(c, nick, destination)
 
 def main():
     import sys
