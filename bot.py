@@ -8,6 +8,7 @@ import string
 import irc.bot
 import irc.strings
 import modules.bitcoin as bitcoin
+import modules.news as news
 from irc.client import ip_numstr_to_quad, ip_quad_to_numstr
 
 class ChatBot(irc.bot.SingleServerIRCBot):
@@ -45,6 +46,8 @@ class ChatBot(irc.bot.SingleServerIRCBot):
         c = self.connection
         channel = self.channel
 
+        argcmd = cmd.split(" ")
+
         if target == "private":
             client = nick
         else:
@@ -67,6 +70,10 @@ class ChatBot(irc.bot.SingleServerIRCBot):
             if client == channel:
                 bitcoin.sendPublicPrices(c, channel, nick)
                 bitcoin.sendPrivatePrices(c, nick)
+
+        elif argcmd[0] == "news":
+            news.readNews(c, client, argcmd[1]) #argcmd: 0 - command, 1 - url
+
 
 def main():
     import sys
