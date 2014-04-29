@@ -1,7 +1,8 @@
 import requests
 
-def sendBasicPrices(c, nick, destination):
+def sendPublicPrices(c, destination, nick):
     euro = u'\u20ac'
+
     try:
         data_request = requests.get("http://nikomo.fi/markets.json").json()
     except requests.exceptions.RequestException:
@@ -19,22 +20,22 @@ def sendBasicPrices(c, nick, destination):
 
     data = dict([('USD', USD), ('EUR', EUR)])
 
-    message = nick + ": Bitcoin - Current: %s, %s - \"!bitcoin more\" for more information" % (data['USD'], data['EUR'])
+    message = nick + ": Bitcoin - Current: %s, %s - Detailed info sent as PM" % (data['USD'], data['EUR'])
     c.privmsg(destination, message)
 
-def sendAdvancedPrices(c, nick, destination):
+def sendPrivatePrices(c, destination):
     euro=u'\u20ac'
 
     try:
         data_request = requests.get("http://nikomo.fi/markets.json").json()
     except requests.exceptions.RequestException:
-        c.privmsg(destination, "Unable to get price data, %s" % nick)
+        c.privmsg(destination, "Unable to get price data, %s" % destination)
         return
 
     try:
         prices_request = requests.get("http://nikomo.fi/weighted_prices.json").json()
     except requests.exceptions.RequestException:
-        c.privmsg(destination, "Unable to get price data, %s" % nick)
+        c.privmsg(destination, "Unable to get price data, %s" % destination)
         return
 
     USDmarket = list(filter(lambda x:x["symbol"]=="bitstampUSD", data_request))
@@ -61,6 +62,6 @@ def sendAdvancedPrices(c, nick, destination):
 
     data = dict([("EUR", EUR),("USD",USD)])
 
-    c.privmsg(destination, nick + ": Bitcoin prices - USD from Bitstamp, EUR from Kraken")
+    c.privmsg(destination, destination + ": Bitcoin prices - USD from Bitstamp, EUR from Kraken")
     c.privmsg(destination, "Low: %s, %s - Average: %s, %s - High: %s, %s" % (data["USD"]["low"], data["EUR"]["low"], data["USD"]["avg"], data["EUR"]["avg"], data["USD"]["high"], data["EUR"]["high"], ))
     c.privmsg(destination, "24hr: %s, %s - 7d: %s, %s - 30d: %s, %s" % (data["USD"]["24h"], data["EUR"]["24h"], data["USD"]["7d"], data["EUR"]["7d"], data["USD"]["30d"], data["EUR"]["30d"], ))

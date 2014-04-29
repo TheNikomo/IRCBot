@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python2
 
 import resource
 import inspect
@@ -25,42 +25,48 @@ class ChatBot(irc.bot.SingleServerIRCBot):
         print("Self-destruct code: " + self.code)
 
     def on_privmsg(self, c, e):
-        self.do_command(e, e.arguments[0], "private")
+        a = e.arguments[0].split("!")
+        if len(a) > 1:
+            self.do_command(e, a[1], "private")
+        if e.arguments[0] == self.code:
+            self.die()
+        return
 
     def on_pubmsg(self, c, e):
         a = e.arguments[0].split("!")
         if len(a) > 1:
             self.do_command(e, a[1], "public")
         if e.arguments[0] == self.code:
-            print("Code accepted from " + nick + ", shutting off.")
             self.die()
         return
 
     def do_command(self, e, cmd, target):
         nick = e.source.nick
         c = self.connection
+        channel = self.channel
 
         if target == "private":
-            destination = nick
+            client = nick
         else:
-            destination = self.channel
+            client = channel
 
         if cmd == self.code:
             print("Code accepted from " + nick + ", shutting off.")
             self.die()
 
         elif cmd == "help":
-            c.privmsg(destination, "Commands: !bitcoin, !bitcoin more, !status")
+            c.privmsg(client, "Commands: !bitcoin, !status, !help")
 
         elif cmd == "status":
             memory = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
-            c.privmsg(destination, "Currently using %s KiB of memory." % memory)
+            c.privmsg(client, "Currently using %s KiB of memory." % memory)
 
         elif cmd == "bitcoin":
-            bitcoin.sendBasicPrices(c, nick, destination)
-
-        elif cmd == "bitcoin more":
-            bitcoin.sendAdvancedPrices(c, nick, destination)
+            if client == nick:
+                bitcoin.sendPrivatePrices(c, nick)
+            if client == channel:
+                bitcoin.sendPublicPrices(c, channel, nick)
+                bitcoin.sendPrivatePrices(c, nick)
 
 def main():
     import sys
