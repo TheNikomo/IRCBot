@@ -1,5 +1,9 @@
 #!/usr/bin/env python2
 
+# Initial code from Joel Rosdahl <joel@rosdahl.net> (https://pypi.python.org/pypi/irc/, scripts/testbot.py)
+# Rest of the code by Niko Montonen <nikomo@nikomo.fi> and <montonen.niko@gmail.com>
+
+
 import resource
 import inspect
 import os
