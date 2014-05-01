@@ -64,7 +64,7 @@ class ChatBot(irc.bot.SingleServerIRCBot):
             self.die()
 
         elif cmd == "help":
-            c.privmsg(client, "Commands: !bitcoin, !status, !help")
+            c.privmsg(client, "Commands: !bitcoin, !news, !status, !help")
 
         elif cmd == "status":
             memory = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
