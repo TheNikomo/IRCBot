@@ -13,6 +13,7 @@ import irc.bot
 import irc.strings
 import modules.bitcoin as bitcoin
 import modules.news as news
+from lepl.apps.rfc3696 import HttpUrl
 from irc.client import ip_numstr_to_quad, ip_quad_to_numstr
 
 class ChatBot(irc.bot.SingleServerIRCBot):
@@ -46,7 +47,8 @@ class ChatBot(irc.bot.SingleServerIRCBot):
         return
 
     def do_command(self, e, cmd, target):
-        nick = e.source.nick
+        nick = e.source.nick.decode('utf-8')
+        cmd = cmd.decode('utf-8')
         c = self.connection
         channel = self.channel
 
@@ -76,7 +78,13 @@ class ChatBot(irc.bot.SingleServerIRCBot):
                 bitcoin.sendPrivatePrices(c, nick)
 
         elif argcmd[0] == "news":
-            news.readNews(c, client, argcmd[1]) #argcmd: 0 - command, 1 - url
+            url = argcmd[1]
+
+            validator = HttpUrl()
+            if validator(url):
+                news.readNews(c, client, url)
+            else:
+                return
 
 
 def main():
