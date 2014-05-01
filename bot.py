@@ -13,6 +13,7 @@ import irc.bot
 import irc.strings
 import modules.bitcoin as bitcoin
 import modules.news as news
+from lxml import html
 from lepl.apps.rfc3696 import HttpUrl
 from irc.client import ip_numstr_to_quad, ip_quad_to_numstr
 
@@ -31,17 +32,17 @@ class ChatBot(irc.bot.SingleServerIRCBot):
         print("Self-destruct code: " + self.code)
 
     def on_privmsg(self, c, e):
-        a = e.arguments[0].split("!")
+        a = e.arguments[0]
         if len(a) > 1:
-            self.do_command(e, a[1], "private")
+            self.do_command(e, a, "private")
         if e.arguments[0] == self.code:
             self.die()
         return
 
     def on_pubmsg(self, c, e):
-        a = e.arguments[0].split("!")
+        a = e.arguments[0]
         if len(a) > 1:
-            self.do_command(e, a[1], "public")
+            self.do_command(e, a, "public")
         if e.arguments[0] == self.code:
             self.die()
         return
@@ -51,6 +52,8 @@ class ChatBot(irc.bot.SingleServerIRCBot):
         cmd = cmd.decode('utf-8')
         c = self.connection
         channel = self.channel
+        validator = HttpUrl()
+
 
         argcmd = cmd.split(" ")
 
@@ -63,28 +66,36 @@ class ChatBot(irc.bot.SingleServerIRCBot):
             print("Code accepted from " + nick + ", shutting off.")
             self.die()
 
-        elif cmd == "help":
+        elif cmd == "!help":
             c.privmsg(client, "Commands: !bitcoin, !news, !status, !help")
 
-        elif cmd == "status":
+        elif cmd == "!status":
             memory = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
             c.privmsg(client, "Currently using %s KiB of memory." % memory)
 
-        elif cmd == "bitcoin":
+        elif cmd == "!bitcoin":
             if client == nick:
                 bitcoin.sendPrivatePrices(c, nick)
             if client == channel:
                 bitcoin.sendPublicPrices(c, channel, nick)
                 bitcoin.sendPrivatePrices(c, nick)
 
-        elif argcmd[0] == "news":
+        elif argcmd[0] == "!news":
             url = argcmd[1]
 
-            validator = HttpUrl()
             if validator(url):
                 news.readNews(c, client, url)
             else:
                 return
+
+        elif validator(cmd):
+            try:
+                website = html.parse(cmd)
+                title = website.find(".//title").text
+                c.privmsg(client, "%s: %s" % (nick, title))
+            except:
+                return
+
 
 
 def main():
@@ -105,10 +116,14 @@ def main():
         port = 6667
     channel = sys.argv[2]
     nickname = sys.argv[3]
+    print("Server, channel and nickname set.")
 
     code = ''.join(random.choice(string.ascii_uppercase + string.digits + string.ascii_lowercase) for _ in range(24))
+    print("Self-destruct code generated")
+
 
     bot = ChatBot(code, channel, nickname, server, port)
+    print("Bot set, connecting...")
     bot.start()
 
 if __name__ == "__main__":
