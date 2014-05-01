@@ -49,7 +49,10 @@ class ChatBot(irc.bot.SingleServerIRCBot):
 
     def do_command(self, e, cmd, target):
         nick = e.source.nick.decode('utf-8')
-        cmd = cmd.decode('utf-8')
+        try:
+            cmd = cmd.decode('utf-8')
+        except Exception, e:
+            return
         c = self.connection
         channel = self.channel
         validator = HttpUrl()
