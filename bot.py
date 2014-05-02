@@ -34,7 +34,10 @@ class ChatBot(irc.bot.SingleServerIRCBot):
     def on_privmsg(self, c, e):
         a = e.arguments[0]
         if len(a) > 1:
-            self.do_command(e, a, "private")
+            try:
+                self.do_command(e, a, "private")
+            except Exception, e:
+                print e
         if e.arguments[0] == self.code:
             self.die()
         return
@@ -42,7 +45,10 @@ class ChatBot(irc.bot.SingleServerIRCBot):
     def on_pubmsg(self, c, e):
         a = e.arguments[0]
         if len(a) > 1:
-            self.do_command(e, a, "public")
+            try:
+                self.do_command(e, a, "public")
+            except Exception, e:
+                print e
         if e.arguments[0] == self.code:
             self.die()
         return
@@ -51,7 +57,7 @@ class ChatBot(irc.bot.SingleServerIRCBot):
         nick = e.source.nick.decode('utf-8')
         try:
             cmd = cmd.decode('utf-8')
-        except Exception, e:
+        except:
             return
         c = self.connection
         channel = self.channel
@@ -91,13 +97,13 @@ class ChatBot(irc.bot.SingleServerIRCBot):
             else:
                 return
 
-        elif validator(cmd):
-            try:
-                website = html.parse(cmd)
-                title = website.find(".//title").text
-                c.privmsg(client, "%s: %s" % (nick, title))
-            except:
-                return
+#        elif validator(cmd):
+#            try:
+#                website = html.parse(cmd)
+#                title = website.find(".//title").text
+#                c.privmsg(client, "%s: %s" % (nick, title))
+#            except:
+#                return
 
 
 
